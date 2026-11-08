@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planning 3E e 3F</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: colonna centrale stretta, schede in alto, elenco per settimana con righe a casella. 3E teal, 3F viola. */
+:root{
+  --bg:#f2f5f7; --surface:#ffffff; --ink:#1b2a33; --muted:#5b6a74; --line:#d9e0e5;
+  --c3e:#1f6f78; --c3f:#7a3fa0; --doing:#a86a0c; --doing-bg:#fdf1d8; --done:#2c7a4b; --done-bg:#e3f2e9; --late:#bb3426; --late-bg:#fbe6e3;
+  --accent:var(--c3e);
+  --font-d:'Bricolage Grotesque',system-ui,sans-serif; --font-b:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#11181d; --surface:#18222a; --ink:#e5ecf0; --muted:#9aa9b3; --line:#2b3841;
+    --c3e:#52b5c0; --c3f:#bc8fe3; --doing:#e6ac4f; --doing-bg:#3a2d12; --done:#5fc28b; --done-bg:#16301f; --late:#f0806f; --late-bg:#3a1b17;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11181d; --surface:#18222a; --ink:#e5ecf0; --muted:#9aa9b3; --line:#2b3841;
+  --c3e:#52b5c0; --c3f:#bc8fe3; --doing:#e6ac4f; --doing-bg:#3a2d12; --done:#5fc28b; --done-bg:#16301f; --late:#f0806f; --late-bg:#3a1b17;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--font-b);-webkit-text-size-adjust:100%}
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 64px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+h1{font:700 28px/1.1 var(--font-d);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);margin-top:4px}
+.sub::first-letter{text-transform:uppercase}
+h2,h3{text-wrap:balance}
+button{font:inherit;color:inherit}
+button,.btn{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* barra Drive */
+.drive{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.drive .dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.drive[data-s="ok"] .dot{background:var(--done)}
+.drive[data-s="dirty"] .dot,.drive[data-s="saving"] .dot,.drive[data-s="loading"] .dot,.drive[data-s="empty"] .dot{background:var(--doing)}
+.drive[data-s="error"] .dot,.drive[data-s="unreadable"] .dot{background:var(--late)}
+.drive .txt{flex:1 1 260px;min-width:0}
+.drive .txt small{display:block;color:var(--muted)}
+.drive .acts{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:6px 11px;border-radius:8px;font-weight:600;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--late);border-color:var(--late)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+
+/* schede */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.tab{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:99px;font-weight:600}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab .n{font-weight:500;opacity:.7;margin-left:6px;font-variant-numeric:tabular-nums}
+.tab.t3e[aria-selected="true"]{background:var(--c3e);border-color:var(--c3e);color:#fff}
+.tab.t3f[aria-selected="true"]{background:var(--c3f);border-color:var(--c3f);color:#fff}
+
+.c3E{--accent:var(--c3e)} .c3F{--accent:var(--c3f)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:12px}
+.toolbar .grow{flex:1 1 220px}
+.summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.summary strong{font:700 22px var(--font-d);font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;min-width:120px;flex:1 1 140px}
+.bar>i{display:block;height:100%;background:var(--accent,var(--done));border-radius:99px}
+.check{display:flex;align-items:center;gap:6px;color:var(--muted)}
+
+.week{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.week.now{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.week>h3{margin:0;padding:10px 14px;font:600 15px var(--font-d);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.week>h3 small{font:500 13px var(--font-b);color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+.pill{font:600 12px var(--font-b);padding:2px 8px;border-radius:99px;background:var(--accent);color:#fff}
+ul.rows{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:32px 1fr auto;gap:2px 10px;padding:10px 14px;border-top:1px solid var(--line);align-items:start}
+.row:first-child{border-top:0}
+.row .main{min-width:0}
+.row .l1{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
+.day{font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);white-space:nowrap}
+.title{font-weight:600;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:13.5px;margin-top:2px;overflow-wrap:anywhere}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:99px;border:1px solid var(--line);margin-right:6px;color:var(--muted)}
+.side{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}
+.chip{border:1px solid var(--line);background:transparent;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:600;color:var(--muted)}
+.chip[data-st="doing"]{background:var(--doing-bg);border-color:var(--doing);color:var(--doing)}
+.lateflag{font-size:12px;font-weight:700;color:var(--late);background:var(--late-bg);padding:2px 8px;border-radius:99px}
+.na{font-size:13px;color:var(--muted);font-style:italic}
+.row.st-na .title{color:var(--muted);font-weight:500}
+.row.st-done .title{text-decoration:line-through;color:var(--muted)}
+.row.st-done{background:var(--done-bg)}
+.edit{border:0;background:none;color:var(--muted);font-size:13px;text-decoration:underline;padding:2px 4px}
+.edit:hover{color:var(--ink)}
+.clsbadge{font-size:12px;font-weight:700;color:#fff;padding:1px 8px;border-radius:6px}
+.clsbadge.b3E{background:var(--c3e)} .clsbadge.b3F{background:var(--c3f)}
+.dash{color:var(--muted);text-align:center;display:block;width:22px}
+
+/* casella */
+.chk{position:relative;display:inline-flex;width:24px;height:24px;margin-top:1px}
+.chk input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:24px;height:24px}
+.chk .box{width:24px;height:24px;border:2px solid var(--muted);border-radius:7px;background:var(--surface);display:grid;place-items:center;pointer-events:none}
+.chk input:checked+.box{background:var(--done);border-color:var(--done)}
+.chk input:checked+.box::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.chk input:focus-visible+.box{outline:3px solid var(--accent);outline-offset:2px}
+
+/* avanzamento */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:12px;padding:14px}
+.card h3{margin:0 0 4px;font:600 15px var(--font-d);color:var(--accent)}
+.card .big{font:700 40px/1 var(--font-d);font-variant-numeric:tabular-nums}
+.card .big small{font-size:18px;font-weight:600}
+.card p{margin:8px 0 0;color:var(--muted);font-size:13.5px;font-variant-numeric:tabular-nums}
+.card .bar{margin-top:10px}
+.sec{margin:22px 0 8px;font:700 18px var(--font-d)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 12px;text-align:left;border-top:1px solid var(--line);white-space:nowrap}
+th{border-top:0;font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+td.num,th.num{text-align:center}
+tr.now td{background:color-mix(in srgb,var(--doing) 14%,var(--surface))}
+td.late{color:var(--late);font-weight:700}
+td .bar{min-width:110px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+summary{cursor:pointer;padding:10px 14px;font-weight:700}
+details .rows .row{grid-template-columns:32px 1fr auto}
+.empty{padding:22px 16px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chips button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 12px;font-weight:600}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* finestra */
+#dlg{position:fixed;inset:0;background:rgba(10,16,20,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+#dlg.open{display:flex}
+.modal{background:var(--surface);color:var(--ink);border-radius:14px;padding:18px;width:100%;max-width:480px;max-height:92%;overflow:auto;border:1px solid var(--line)}
+.modal h2{margin:0 0 12px;font:700 20px var(--font-d)}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-weight:600;font-size:13.5px}
+.field input,.field select,.field textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+.field textarea{min-height:70px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mbtn{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.mbtn .sp{flex:1}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;max-width:92%;display:none;z-index:20;font-weight:600}
+#toast.show{display:block}
+#toast a,#toast button{color:inherit;background:none;border:0;font-weight:700;text-decoration:underline;padding:0 0 0 6px}
+
+.ideaform{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.ideaform .field{margin:0}
+.ideaform .grow{flex:1 1 280px}
+ul.ideas{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:8px}
+.idea{--accent:var(--muted);display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:10px;padding:10px 14px}
+.idea.c3E{--accent:var(--c3e)}
+.idea.c3F{--accent:var(--c3f)}
+.idea .itext{font-weight:600;overflow-wrap:anywhere}
+.idea .side{flex-wrap:nowrap}
+details ul.ideas{padding:0 12px 12px;margin:0}
+@media (max-width:540px){
+  .idea{grid-template-columns:1fr}
+  .idea .side{justify-content:flex-start;flex-wrap:wrap}
+  .row{grid-template-columns:32px 1fr}
+  .row .side{grid-column:2;justify-content:flex-start}
+  .two{grid-template-columns:1fr}
+  h1{font-size:24px}
+}
+@media (prefers-reduced-motion:no-preference){ .bar>i{transition:width .3s} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Planning 3E · 3F</h1>
+      <div class="sub" id="today"></div>
+    </div>
+  </header>
+
+  <div class="drive" id="drive" data-s="loading" aria-live="polite">
+    <span class="dot" aria-hidden="true"></span>
+    <div class="txt"><span id="drive-main">Collego Google Drive…</span><small id="drive-sub"></small></div>
+    <div class="acts">
+      <button class="btn primary" data-act="drive-save" id="btn-save">Salva su Drive</button>
+      <button class="btn" data-act="sheet" id="btn-sheet">Copia in Google Sheet</button>
+      <button class="btn ghost" data-act="backup">Backup</button>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Schede" id="tabs"></nav>
+  <main id="main"></main>
+</div>
+
+<div id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-title"><div class="modal" id="modal"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+const SERVER='Google Drive';
+const FILE_TITLE='Planning 3E-3F.json';
+const SHEET_TITLE='Planning 3E-3F (copia foglio)';
+const SHEET_MIME='application/vnd.google-apps.spreadsheet';
+const LS_KEY='planning-3e-3f-v1';
+const TYPES=['Lettura','Grammatica','Storia','Scrittura','Film','Canva/Digitale','Evento/Gioco','Autovalutazione','Emozioni','Altro'];
+const ST_LABEL={todo:'Da iniziare',doing:'Iniziato',done:'Finito',na:'Non lavorativo'};
+const SEED=[{"id": 1, "cls": "3E", "date": null, "title": "Lavoro parole / nomi / grammatica – riflessione linguistica", "type": "Grammatica", "status": "doing", "note": "Dalla lista «Da finire». Evidenziato nel documento originale", "doneAt": null}, {"id": 2, "cls": "3E", "date": null, "title": "Cartellone regole", "type": "Altro", "status": "doing", "note": "Dalla lista «Da finire». Evidenziato nel documento originale", "doneAt": null}, {"id": 3, "cls": "3E", "date": null, "title": "Idee nuove", "type": "Altro", "status": "doing", "note": "Dalla lista «Da finire»", "doneAt": null}, {"id": 4, "cls": "3E", "date": null, "title": "3-2-1 Paranorman", "type": "Film", "status": "doing", "note": "Dalla lista «Da finire»", "doneAt": null}, {"id": 5, "cls": "3E", "date": null, "title": "Recensioni albi", "type": "Lettura", "status": "doing", "note": "Dalla lista «Da finire»", "doneAt": null}, {"id": 6, "cls": "3E", "date": null, "title": "Autovalutazione", "type": "Autovalutazione", "status": "todo", "note": "Dalla lista «Cose da fare»", "doneAt": null}, {"id": 7, "cls": "3E", "date": "2026-10-26", "title": "Cari amici", "type": "Lettura", "status": "todo", "note": "", "doneAt": null}, {"id": 8, "cls": "3E", "date": "2026-10-26", "title": "Autovalutazione cavolo", "type": "Autovalutazione", "status": "todo", "note": "Evidenziato nel documento originale", "doneAt": null}, {"id": 9, "cls": "3E", "date": "2026-10-26", "title": "Lettura magica Medicina +", "type": "Lettura", "status": "todo", "note": "", "doneAt": null}, {"id": 10, "cls": "3F", "date": "2026-10-26", "title": "Lavoro di lettura a gruppi per la 3E", "type": "Lettura", "status": "todo", "note": "4 libri: In una notte nera · Grrrrrrrr · Cornabicorna · Lupo affamato", "doneAt": null}, {"id": 11, "cls": "3E", "date": "2026-10-27", "title": "Visione trailer film", "type": "Film", "status": "todo", "note": "", "doneAt": null}, {"id": 12, "cls": "3E", "date": "2026-10-27", "title": "Creazione invito per la 3F", "type": "Scrittura", "status": "todo", "note": "", "doneAt": null}, {"id": 13, "cls": "3F", "date": "2026-10-27", "title": "Halloween", "type": "Evento/Gioco", "status": "todo", "note": "", "doneAt": null}, {"id": 14, "cls": "3E", "date": "2026-10-28", "title": "Storia: completamento tabella tracce", "type": "Storia", "status": "todo", "note": "", "doneAt": null}, {"id": 15, "cls": "3F", "date": "2026-10-28", "title": "Storia: tracce", "type": "Storia", "status": "todo", "note": "", "doneAt": null}, {"id": 16, "cls": "3E", "date": "2026-10-29", "title": "Escape game biscotti Halloween", "type": "Evento/Gioco", "status": "todo", "note": "", "doneAt": null}, {"id": 17, "cls": "3F", "date": "2026-10-29", "title": "Prove di lettura", "type": "Lettura", "status": "todo", "note": "", "doneAt": null}, {"id": 18, "cls": "3F", "date": "2026-10-29", "title": "Halloween escape", "type": "Evento/Gioco", "status": "todo", "note": "Enigma 1: percorso biscotti (disegna il biscotto 1) · Enigma 2: sposta gli oggetti (disegna biscotto) · Enigma 3: quiz finestre · Enigma 4: crucipuzzle inglese (disegna biscotto) · Biscotto trovato. Parole: pumpkin, bat, vampire, monster, ghost, witch, mummy, skeleton. Chiusura 3-2-1: 3 cose che fa il gufo nel gioco / 2 cose difficili fatte oggi / 1 enigma preferito e perché", "doneAt": null}, {"id": 19, "cls": "3E", "date": "2026-10-30", "title": "Letture da paura della 3F", "type": "Lettura", "status": "todo", "note": "Venerdì mattina", "doneAt": null}, {"id": 20, "cls": "3E", "date": "2026-11-02", "title": "3-2-1 del film", "type": "Film", "status": "todo", "note": "", "doneAt": null}, {"id": 21, "cls": "3E", "date": "2026-11-02", "title": "Lettura magica Medicina (insieme e da soli)", "type": "Lettura", "status": "todo", "note": "", "doneAt": null}, {"id": 22, "cls": "3F", "date": "2026-11-02", "title": "3-2-1 film Paranorman", "type": "Film", "status": "todo", "note": "", "doneAt": null}, {"id": 23, "cls": "3E", "date": "2026-11-03", "title": "Riflessione linguistica: i nomi", "type": "Grammatica", "status": "todo", "note": "", "doneAt": null}, {"id": 24, "cls": "3E", "date": "2026-11-03", "title": "Canva nomi", "type": "Canva/Digitale", "status": "todo", "note": "", "doneAt": null}, {"id": 25, "cls": "3F", "date": "2026-11-03", "title": "Riflessione linguistica", "type": "Grammatica", "status": "todo", "note": "", "doneAt": null}, {"id": 26, "cls": "3E", "date": "2026-11-04", "title": "Lettura", "type": "Lettura", "status": "todo", "note": "", "doneAt": null}, {"id": 27, "cls": "3F", "date": "2026-11-04", "title": "Lettura «pozione»", "type": "Lettura", "status": "todo", "note": "", "doneAt": null}, {"id": 28, "cls": "3E", "date": "2026-11-05", "title": "Produzione scritta: libricino biblioteca", "type": "Scrittura", "status": "todo", "note": "", "doneAt": null}, {"id": 29, "cls": "3F", "date": "2026-11-05", "title": "Lettura «Schiaccianoci»", "type": "Lettura", "status": "todo", "note": "", "doneAt": null}, {"id": 30, "cls": "3E", "date": "2026-11-06", "title": "Storia: attività sulle fonti", "type": "Storia", "status": "todo", "note": "", "doneAt": null}, {"id": 31, "cls": "3E", "date": "2026-11-06", "title": "Canva sulle fonti", "type": "Canva/Digitale", "status": "todo", "note": "", "doneAt": null}, {"id": 32, "cls": "3F", "date": "2026-11-06", "title": "Storia: fonti + Canva", "type": "Storia", "status": "todo", "note": "", "doneAt": null}, {"id": 33, "cls": "3E", "date": "2026-11-09", "title": "Lettura cerchio emozioni (veloce)", "type": "Emozioni", "status": "todo", "note": "", "doneAt": null}, {"id": 34, "cls": "3E", "date": "2026-11-09", "title": "Correzione quaderno del compagno + scrivere un consiglio", "type": "Scrittura", "status": "todo", "note": "", "doneAt": null}, {"id": 35, "cls": "3E", "date": "2026-11-09", "title": "Lettura Cappuccetto Rosso (lavoro in piccolo gruppo)", "type": "Lettura", "status": "todo", "note": "Rispondere nel documento: chi sono i personaggi – dove si svolge la storia – cosa succede", "doneAt": null}, {"id": 36, "cls": "3F", "date": "2026-11-09", "title": "Albo «Grrr» in prima", "type": "Lettura", "status": "todo", "note": "", "doneAt": null}, {"id": 37, "cls": "3E", "date": "2026-11-10", "title": "Grammatica", "type": "Grammatica", "status": "todo", "note": "", "doneAt": null}, {"id": 38, "cls": "3F", "date": "2026-11-10", "title": "Grammatica", "type": "Grammatica", "status": "todo", "note": "", "doneAt": null}, {"id": 39, "cls": "3E", "date": "2026-11-11", "title": "Vacanza", "type": "Altro", "status": "na", "note": "Giorno non lavorativo / assente", "doneAt": null}, {"id": 40, "cls": "3F", "date": "2026-11-11", "title": "Vacanza", "type": "Altro", "status": "na", "note": "Giorno non lavorativo / assente", "doneAt": null}, {"id": 41, "cls": "3E", "date": "2026-11-12", "title": "Storia: le fonti", "type": "Storia", "status": "todo", "note": "", "doneAt": null}, {"id": 42, "cls": "3F", "date": "2026-11-12", "title": "Storia: le fonti", "type": "Storia", "status": "todo", "note": "", "doneAt": null}, {"id": 43, "cls": "3E", "date": "2026-11-13", "title": "Chiara non c'è", "type": "Altro", "status": "na", "note": "Giorno non lavorativo / assente", "doneAt": null}, {"id": 44, "cls": "3F", "date": "2026-11-13", "title": "Lettura «George»: che cosa succederà alla nonna? Facciamo la nostra pozione", "type": "Lettura", "status": "todo", "note": "", "doneAt": null}];
+
+/* ---------- utilità ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const weekStart=s=>{const d=pd(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)};
+const TODAY=iso(new Date());
+const THIS_WEEK=weekStart(TODAY);
+const fmtDay=s=>new Intl.DateTimeFormat('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'}).format(pd(s)).replace(/\./g,'');
+const fmtShort=s=>new Intl.DateTimeFormat('it-IT',{day:'2-digit',month:'2-digit'}).format(pd(s));
+const fmtTs=ts=>new Intl.DateTimeFormat('it-IT',{day:'2-digit',month:'2-digit'}).format(new Date(ts));
+const fmtTime=ts=>new Intl.DateTimeFormat('it-IT',{hour:'2-digit',minute:'2-digit'}).format(new Date(ts));
+$('#today').textContent=new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
+
+/* ---------- stato ---------- */
+const validState=o=>o&&typeof o==='object'&&Array.isArray(o.items);
+function loadLocal(){try{const o=JSON.parse(localStorage.getItem(LS_KEY));return validState(o)?o:null}catch(e){return null}}
+function persistLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify(state))}catch(e){}}
+function normState(o){if(!Array.isArray(o.todos))o.todos=[];o.nextTodo=Math.max(o.nextTodo||1,...o.todos.map(t=>t.id+1),1);if(!Array.isArray(o.ideas))o.ideas=[];o.nextIdea=Math.max(o.nextIdea||1,...o.ideas.map(i=>i.id+1),1);return o}
+let state=normState(loadLocal()||{v:1,savedAt:0,nextId:SEED.length+1,items:SEED});
+const TABS=['3e','3f','dafare','idee','avanzamento','finite'];
+let tab=(location.hash||'#3e').slice(1).toLowerCase();
+if(!TABS.includes(tab))tab='3e';
+let showDone=false, finFilter='all';
+
+const itemsOf=cls=>state.items.filter(i=>i.cls===cls);
+const byDate=(a,b)=>{const x=a.date||'0000',y=b.date||'0000';return x<y?-1:x>y?1:a.id-b.id};
+const isLate=i=>!!i.date&&i.date<TODAY&&(i.status==='todo'||i.status==='doing');
+function stats(list){
+  const act=list.filter(i=>i.status!=='na');
+  const done=act.filter(i=>i.status==='done').length, doing=act.filter(i=>i.status==='doing').length, todo=act.filter(i=>i.status==='todo').length;
+  return {total:act.length,done,doing,todo,left:doing+todo,late:act.filter(isLate).length,pct:act.length?Math.round(done/act.length*100):0};
+}
+function touch(){state.savedAt=Date.now();persistLocal();markDirty();render()}
+
+/* ---------- disegno ---------- */
+function rowHtml(i,o={}){
+  const chk=i.status==='na'?'<span class="dash" aria-hidden="true">–</span>':
+    `<label class="chk"><input type="checkbox" data-act="toggle" data-id="${i.id}" ${i.status==='done'?'checked':''} aria-label="Finita: ${esc(i.title)}"><span class="box"></span></label>`;
+  let side='';
+  if(i.status==='na')side='<span class="na">giorno non lavorativo</span>';
+  else if(i.status==='done')side=`<span class="na">${i.doneAt?'finita il '+fmtTs(i.doneAt):'finita'}</span>`;
+  else side=`<button class="chip" data-act="cycle" data-id="${i.id}" data-st="${i.status}" title="Cambia stato">${ST_LABEL[i.status]}</button>`;
+  if(isLate(i))side+='<span class="lateflag">in ritardo</span>';
+  side+=`<button class="edit" data-act="edit" data-id="${i.id}">Modifica</button>`;
+  const badge=o.cls?`<span class="clsbadge b${i.cls}">${i.cls}</span> `:'';
+  return `<li class="row st-${i.status}"><div>${chk}</div>
+    <div class="main"><div class="l1">${badge}${i.date?`<span class="day">${fmtDay(i.date)}</span>`:'<span class="day">senza data</span>'}<span class="title">${esc(i.title)}</span></div>
+    <div class="meta"><span class="tag">${esc(i.type||'Altro')}</span>${esc(i.note||'')}</div></div>
+    <div class="side">${side}</div></li>`;
+}
+const barHtml=p=>`<div class="bar" role="img" aria-label="${p}% completato"><i style="width:${p}%"></i></div>`;
+
+function renderPlanning(cls){
+  const all=itemsOf(cls).sort(byDate), st=stats(all);
+  const vis=showDone?all:all.filter(i=>i.status!=='done');
+  const groups=[];
+  vis.forEach(i=>{const k=i.date?weekStart(i.date):'arretrati';let g=groups.find(x=>x.k===k);if(!g){g={k,items:[]};groups.push(g)}g.items.push(i)});
+  let h=`<div class="${'c'+cls}"><div class="toolbar">
+    <div class="summary grow"><strong>${st.done}</strong><span>su ${st.total} finite</span>${barHtml(st.pct)}</div>
+    <label class="check"><input type="checkbox" id="showdone" ${showDone?'checked':''}> Mostra anche le finite</label>
+    <button class="btn primary" data-act="add" data-cls="${cls}">+ Nuova attività</button></div>
+    <p class="meta" style="margin:0 0 12px">${st.doing} iniziate · ${st.todo} da iniziare${st.late?` · <strong style="color:var(--late)">${st.late} in ritardo</strong>`:''}</p>`;
+  if(!groups.length)h+='<div class="empty">Tutto fatto per ora. Le attività finite sono nella scheda «Finite».</div>';
+  groups.forEach(g=>{
+    const full=all.filter(i=>(i.date?weekStart(i.date):'arretrati')===g.k), fs=stats(full);
+    const title=g.k==='arretrati'?'Arretrati (senza data)':'Settimana dal '+fmtShort(g.k);
+    h+=`<section class="week ${g.k===THIS_WEEK?'now':''}"><h3>${title}${g.k===THIS_WEEK?' <span class="pill">settimana corrente</span>':''}<small>${fs.done} su ${fs.total} finite</small></h3>
+      <ul class="rows">${g.items.map(i=>rowHtml(i)).join('')}</ul></section>`;
+  });
+  return h+'</div>';
+}
+
+function weeklyTable(cls){
+  const list=itemsOf(cls).filter(i=>i.status!=='na');
+  const keys=[...new Set(list.map(i=>i.date?weekStart(i.date):'arretrati'))].sort((a,b)=>a==='arretrati'?-1:b==='arretrati'?1:a<b?-1:1);
+  let h=`<h3 class="sec" style="color:var(--${cls==='3E'?'c3e':'c3f'})">${cls} per settimana</h3><div class="tbl c${cls}"><table><thead><tr><th>Settimana</th><th>Avanzamento</th><th class="num">Finite</th><th class="num">Iniziate</th><th class="num">Da iniziare</th><th class="num">In ritardo</th></tr></thead><tbody>`;
+  keys.forEach(k=>{
+    const s=stats(list.filter(i=>(i.date?weekStart(i.date):'arretrati')===k));
+    h+=`<tr class="${k===THIS_WEEK?'now':''}"><td>${k==='arretrati'?'Arretrati':'dal '+fmtShort(k)}${k===THIS_WEEK?' · corrente':''}</td><td>${barHtml(s.pct)}</td><td class="num">${s.done}/${s.total}</td><td class="num">${s.doing}</td><td class="num">${s.todo}</td><td class="num ${s.late?'late':''}">${s.late||'–'}</td></tr>`;
+  });
+  return h+'</tbody></table></div>';
+}
+
+function renderAvanz(){
+  let h='<div class="cards">';
+  [['3E',itemsOf('3E')],['3F',itemsOf('3F')],['Totale',state.items]].forEach(([n,l])=>{
+    const s=stats(l), cc=n==='3E'?'c3E':n==='3F'?'c3F':'';
+    h+=`<div class="card ${cc}"><h3>${n}</h3><div class="big">${s.pct}<small>%</small></div>${barHtml(s.pct)}
+      <p>${s.done} finite · ${s.doing} iniziate · ${s.todo} da iniziare${s.late?` · <strong style="color:var(--late)">${s.late} in ritardo</strong>`:''}</p></div>`;
+  });
+  h+='</div>'+weeklyTable('3E')+weeklyTable('3F');
+  const open=state.items.filter(i=>i.status==='doing').sort(byDate), todo=state.items.filter(i=>i.status==='todo').sort(byDate);
+  h+=`<h3 class="sec">Da finire</h3>
+    <details open><summary>Iniziate (${open.length})</summary><ul class="rows">${open.map(i=>rowHtml(i,{cls:1})).join('')||'<li class="row"><div></div><div class="meta">Nessuna attività in corso.</div></li>'}</ul></details>
+    <details><summary>Da iniziare (${todo.length})</summary><ul class="rows">${todo.map(i=>rowHtml(i,{cls:1})).join('')||'<li class="row"><div></div><div class="meta">Niente da iniziare.</div></li>'}</ul></details>`;
+  return h;
+}
+
+function renderFinite(){
+  const done=state.items.filter(i=>i.status==='done'&&(finFilter==='all'||i.cls===finFilter)).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  let h=`<div class="chips" role="group" aria-label="Filtra per classe">${[['all','Tutte'],['3E','3E'],['3F','3F']].map(([k,l])=>`<button data-act="fin" data-k="${k}" aria-pressed="${finFilter===k}">${l}</button>`).join('')}</div>`;
+  if(!done.length)return h+'<div class="empty">Ancora niente di finito. Spunta una attività nel Planning e la trovi qui.</div>';
+  return h+`<section class="week"><h3>${done.length} attività finite</h3><ul class="rows">${done.map(i=>rowHtml(i,{cls:1})).join('')}</ul></section>`;
+}
+
+const todoRow=t=>{
+  const chk=`<label class="chk"><input type="checkbox" data-act="todo-toggle" data-id="${t.id}" ${t.done?'checked':''} aria-label="Fatta: ${esc(t.text)}"><span class="box"></span></label>`;
+  let side='';
+  if(t.done)side=`<span class="na">${t.doneAt?'fatta il '+fmtTs(t.doneAt):'fatta'}</span>`;
+  else if(t.due){side=t.due<TODAY?'<span class="lateflag">in ritardo</span>':t.due===TODAY?'<span class="chip" data-st="doing">oggi</span>':''}
+  side+=`<button class="edit" data-act="todo-edit" data-id="${t.id}">Modifica</button>`;
+  return `<li class="row ${t.done?'st-done':''}"><div>${chk}</div><div class="main"><div class="l1">${t.due?`<span class="day">${fmtDay(t.due)}</span>`:''}<span class="title">${esc(t.text)}</span></div>${t.note?`<div class="meta">${esc(t.note)}</div>`:''}</div><div class="side">${side}</div></li>`;
+};
+function renderTodo(){
+  const open=state.todos.filter(t=>!t.done).sort((a,b)=>{const x=a.due||'9999',y=b.due||'9999';return x<y?-1:x>y?1:a.createdAt-b.createdAt});
+  const done=state.todos.filter(t=>t.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  let h=`<form id="todoform" class="ideaform"><div class="field grow"><label for="todo-text">Cosa devi fare</label><input id="todo-text" type="text" autocomplete="off" placeholder="Per esempio: fotocopie, verbale interclasse, comunicazione ai genitori"></div>
+    <div class="field"><label for="todo-due">Entro (facoltativo)</label><input id="todo-due" type="date"></div>
+    <button class="btn primary" type="submit">Aggiungi</button></form>`;
+  h+=open.length?`<section class="week"><h3>Da fare per me<small>${open.length} aperte</small></h3><ul class="rows">${open.map(todoRow).join('')}</ul></section>`:'<div class="empty">Niente in sospeso. Scrivi qui sopra le cose da fare che non sono attività di classe: fotocopie, verbali, comunicazioni.</div>';
+  if(done.length)h+=`<details><summary>Fatte (${done.length})</summary><ul class="rows">${done.map(todoRow).join('')}</ul></details>`;
+  return h;
+}
+function openTodoEdit(id){
+  const t=state.todos.find(x=>x.id===id); if(!t)return; editingTodo=id; delArmed=false;
+  $('#modal').innerHTML=`<h2 id="dlg-title">Modifica cosa da fare</h2>
+  <form id="ft">
+    <div class="field"><label for="ft-text">Cosa devi fare</label><input id="ft-text" type="text" required value="${esc(t.text)}"></div>
+    <div class="field"><label for="ft-due">Entro</label><input id="ft-due" type="date" value="${esc(t.due||'')}"></div>
+    <div class="field"><label for="ft-note">Note</label><textarea id="ft-note">${esc(t.note||'')}</textarea></div>
+    <div class="mbtn"><button class="btn primary" type="submit">Salva</button><button class="btn" type="button" data-act="close">Annulla</button><span class="sp"></span><button class="btn danger" type="button" data-act="todo-del">Elimina</button></div>
+  </form>`;
+  $('#dlg').classList.add('open'); setTimeout(()=>$('#ft-text').focus(),30);
+}
+function ideaHtml(i){
+  const badge=i.cls?`<span class="clsbadge b${i.cls}">${i.cls}</span> `:'';
+  const acts=i.done
+    ?`<button class="edit" data-act="idea-reopen" data-id="${i.id}">Riporta tra le idee</button>`
+    :`<button class="btn primary" data-act="idea-conv" data-id="${i.id}">Trasforma in attività</button><button class="edit" data-act="idea-edit" data-id="${i.id}">Modifica</button>`;
+  return `<li class="idea ${i.cls?'c'+i.cls:''}"><div class="main"><div class="itext">${badge}${esc(i.text)}</div>
+    <div class="meta">${i.note?esc(i.note)+' · ':''}aggiunta il ${fmtTs(i.createdAt)}</div></div><div class="side">${acts}</div></li>`;
+}
+function renderIdee(){
+  const open=state.ideas.filter(i=>!i.done).sort((a,b)=>b.createdAt-a.createdAt);
+  const done=state.ideas.filter(i=>i.done).sort((a,b)=>b.createdAt-a.createdAt);
+  let h=`<form id="ideaform" class="ideaform"><div class="field grow"><label for="idea-text">Nuova idea</label><input id="idea-text" type="text" autocomplete="off" placeholder="Scrivi qui un’idea che ti è venuta in mente"></div>
+    <div class="field"><label for="idea-cls">Per</label><select id="idea-cls"><option value="">Entrambe / da decidere</option><option>3E</option><option>3F</option></select></div>
+    <button class="btn primary" type="submit">Aggiungi</button></form>`;
+  h+=open.length?`<ul class="ideas">${open.map(ideaHtml).join('')}</ul>`:'<div class="empty">Nessuna idea per ora. Scrivine una qui sopra: quando è pronta la trasformi in attività del planning.</div>';
+  if(done.length)h+=`<details><summary>Già trasformate in attività (${done.length})</summary><ul class="ideas">${done.map(ideaHtml).join('')}</ul></details>`;
+  return h;
+}
+function renderTabs(){
+  const n3e=stats(itemsOf('3E')).left, n3f=stats(itemsOf('3F')).left, nf=state.items.filter(i=>i.status==='done').length, ni=state.ideas.filter(i=>!i.done).length, nt=state.todos.filter(t=>!t.done).length;
+  const defs=[['3e','3E',n3e,'t3e'],['3f','3F',n3f,'t3f'],['dafare','Da fare',nt,''],['idee','Idee',ni,''],['avanzamento','Avanzamento','',''],['finite','Finite',nf,'']];
+  $('#tabs').innerHTML=defs.map(([k,l,n,c])=>`<button role="tab" class="tab ${c}" data-act="tab" data-k="${k}" aria-selected="${tab===k}">${l}${n!==''?`<span class="n">${n}</span>`:''}</button>`).join('');
+}
+function render(){
+  renderTabs();
+  $('#main').innerHTML=tab==='3e'?renderPlanning('3E'):tab==='3f'?renderPlanning('3F'):tab==='dafare'?renderTodo():tab==='idee'?renderIdee():tab==='avanzamento'?renderAvanz():renderFinite();
+  renderDrive();
+}
+
+/* ---------- finestra modifica ---------- */
+let editing=null, delArmed=false, convIdea=null, editingIdea=null, lastMoved=null, editingTodo=null;
+function openEdit(id,cls,pre){
+  const it=id?state.items.find(x=>x.id===id):null; editing=it?it.id:null; delArmed=false;
+  pre=pre||{}; const v=it||{cls:pre.cls||cls||'3E',date:'',title:pre.title||'',type:'Lettura',status:'todo',note:pre.note||''};
+  $('#modal').innerHTML=`<h2 id="dlg-title">${it?'Modifica attività':convIdea!=null?'Da idea ad attività':'Nuova attività'}</h2>
+  <form id="f">
+    <div class="two"><div class="field"><label for="f-cls">Classe</label><select id="f-cls">${['3E','3F'].map(c=>`<option ${v.cls===c?'selected':''}>${c}</option>`).join('')}<option value="both">3E e 3F</option></select></div>
+    <div class="field"><label for="f-date">Giorno (facoltativo)</label><input id="f-date" type="date" value="${esc(v.date||'')}"></div></div>
+    <div class="field"><label for="f-title">Attività</label><input id="f-title" type="text" required value="${esc(v.title)}"></div>
+    <div class="two"><div class="field"><label for="f-type">Tipo</label><select id="f-type">${TYPES.map(t=>`<option ${v.type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+    <div class="field"><label for="f-st">Stato</label><select id="f-st">${Object.entries(ST_LABEL).map(([k,l])=>`<option value="${k}" ${v.status===k?'selected':''}>${k==='done'?'Finito':l}</option>`).join('')}</select></div></div>
+    <div class="field"><label for="f-note">Note</label><textarea id="f-note">${esc(v.note||'')}</textarea></div>
+    <p class="meta" style="margin:0 0 8px">Con «3E e 3F» si crea un’attività per ciascuna classe, ognuna con il suo stato. L’altra classe parte da «Da iniziare».</p>
+    <div class="mbtn"><button class="btn primary" type="submit">Salva</button><button class="btn" type="button" data-act="close">Annulla</button><span class="sp"></span>
+    ${it?'<button class="btn" type="button" data-act="to-idea">Sposta tra le idee</button><button class="btn danger" type="button" data-act="del" id="btn-del">Elimina</button>':''}</div>
+  </form>`;
+  $('#dlg').classList.add('open'); setTimeout(()=>$('#f-title').focus(),30);
+}
+function openIdeaEdit(id){
+  const it=state.ideas.find(x=>x.id===id); if(!it)return; editingIdea=id; delArmed=false;
+  $('#modal').innerHTML=`<h2 id="dlg-title">Modifica idea</h2>
+  <form id="fi">
+    <div class="field"><label for="fi-text">Idea</label><textarea id="fi-text" required>${esc(it.text)}</textarea></div>
+    <div class="field"><label for="fi-cls">Per</label><select id="fi-cls"><option value="" ${!it.cls?'selected':''}>Entrambe / da decidere</option>${['3E','3F'].map(c=>`<option ${it.cls===c?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="field"><label for="fi-note">Note</label><textarea id="fi-note">${esc(it.note||'')}</textarea></div>
+    <div class="mbtn"><button class="btn primary" type="submit">Salva</button><button class="btn" type="button" data-act="close">Annulla</button><span class="sp"></span><button class="btn danger" type="button" data-act="idea-del">Elimina</button></div>
+  </form>`;
+  $('#dlg').classList.add('open'); setTimeout(()=>$('#fi-text').focus(),30);
+}
+function closeDlg(){$('#dlg').classList.remove('open');editing=null;convIdea=null;editingIdea=null;editingTodo=null}
+document.addEventListener('submit',e=>{
+  if(e.target.id==='todoform'){
+    e.preventDefault();
+    const t=$('#todo-text').value.trim(); if(!t){$('#todo-text').focus();return}
+    state.todos.push({id:state.nextTodo++,text:t,due:$('#todo-due').value||null,note:'',createdAt:Date.now(),done:false,doneAt:null});
+    touch(); const x=$('#todo-text'); if(x)x.focus(); return;
+  }
+  if(e.target.id==='ft'){
+    e.preventDefault();
+    const t=$('#ft-text').value.trim(); if(!t){$('#ft-text').focus();return}
+    const it=state.todos.find(x=>x.id===editingTodo); if(it){it.text=t;it.due=$('#ft-due').value||null;it.note=$('#ft-note').value.trim()}
+    closeDlg(); touch(); return;
+  }
+  if(e.target.id==='ideaform'){
+    e.preventDefault();
+    const t=$('#idea-text').value.trim(); if(!t){$('#idea-text').focus();return}
+    state.ideas.push({id:state.nextIdea++,text:t,cls:$('#idea-cls').value,note:'',createdAt:Date.now(),done:false});
+    touch(); const x=$('#idea-text'); if(x)x.focus(); return;
+  }
+  if(e.target.id==='fi'){
+    e.preventDefault();
+    const t=$('#fi-text').value.trim(); if(!t){$('#fi-text').focus();return}
+    const it=state.ideas.find(x=>x.id===editingIdea); if(it){it.text=t;it.cls=$('#fi-cls').value;it.note=$('#fi-note').value.trim()}
+    closeDlg(); touch(); return;
+  }
+  if(e.target.id!=='f')return; e.preventDefault();
+  const title=$('#f-title').value.trim(); if(!title){$('#f-title').focus();return}
+  const st=$('#f-st').value, sel=$('#f-cls').value, both=sel==='both', base=editing?state.items.find(x=>x.id===editing).cls:'3E';
+  const data={cls:both?base:sel,date:$('#f-date').value||null,title,type:$('#f-type').value,status:st,note:$('#f-note').value.trim()};
+  if(editing){const it=state.items.find(x=>x.id===editing);const was=it.status;Object.assign(it,data);if(st==='done'&&was!=='done')it.doneAt=Date.now();if(st!=='done')it.doneAt=null}
+  else{const nid=state.nextId++;state.items.push({id:nid,doneAt:st==='done'?Date.now():null,...data});
+    if(convIdea!=null){const idea=state.ideas.find(x=>x.id===convIdea);if(idea){idea.done=true;idea.itemId=nid}}}
+  if(both){state.items.push({id:state.nextId++,doneAt:null,...data,cls:data.cls==='3E'?'3F':'3E',status:st==='na'?'na':'todo'})}
+  const wasConv=convIdea!=null, tcls=data.cls, lab=both?'3E e 3F':data.cls;
+  closeDlg(); touch();
+  if(wasConv)toast(`Idea trasformata: aggiunta al Planning ${lab} · <button data-act="tab" data-k="${tcls.toLowerCase()}">Vai</button>`);
+});
+
+/* ---------- backup ---------- */
+function openBackup(){
+  $('#modal').innerHTML=`<h2 id="dlg-title">Backup</h2>
+  <p class="meta">Copia questo testo e conservalo dove vuoi. Per ripristinare, incolla qui un backup e premi «Importa».</p>
+  <div class="field"><label for="bk">Dati del planning</label><textarea id="bk" style="min-height:160px">${esc(JSON.stringify(state))}</textarea></div>
+  <div class="mbtn"><button class="btn" data-act="bk-copy">Copia</button><button class="btn primary" data-act="bk-import">Importa</button><span class="sp"></span><button class="btn" data-act="close">Chiudi</button></div>`;
+  $('#dlg').classList.add('open');
+}
+let toastT;
+function toast(html){const t=$('#toast');t.innerHTML=html;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),5200)}
+
+/* ---------- eventi ---------- */
+document.addEventListener('click',async e=>{
+  if(e.target.id==='dlg'){closeDlg();return}
+  const el=e.target.closest('[data-act]'); if(!el)return;
+  const act=el.dataset.act, id=el.dataset.id?+el.dataset.id:null;
+  if(act==='tab'){tab=el.dataset.k;try{location.hash='#'+tab}catch(x){}render()}
+  else if(act==='add')openEdit(null,el.dataset.cls);
+  else if(act==='edit')openEdit(id);
+  else if(act==='idea-conv'){const i=state.ideas.find(x=>x.id===id);if(i){convIdea=i.id;openEdit(null,i.cls||'3E',{title:i.text,note:i.note,cls:i.cls||''})}}
+  else if(act==='to-idea'){
+    const it=state.items.find(x=>x.id===editing); if(!it)return;
+    const note=[it.note,it.date?'era previsto il '+fmtShort(it.date):''].filter(Boolean).join(' · ');
+    const idea={id:state.nextIdea++,text:it.title,cls:it.cls,note,createdAt:Date.now(),done:false};
+    lastMoved={item:it,ideaId:idea.id};
+    state.items=state.items.filter(x=>x.id!==it.id); state.ideas.push(idea);
+    closeDlg(); touch();
+    toast('Spostata tra le idee · <button data-act="undo-move">Annulla</button> <button data-act="tab" data-k="idee">Vai alle idee</button>');
+  }
+  else if(act==='undo-move'){
+    if(lastMoved){state.ideas=state.ideas.filter(x=>x.id!==lastMoved.ideaId);state.items.push(lastMoved.item);lastMoved=null;touch();$('#toast').classList.remove('show')}
+  }
+  else if(act==='todo-edit')openTodoEdit(id);
+  else if(act==='todo-del'){
+    if(!delArmed){delArmed=true;el.textContent='Conferma eliminazione';return}
+    state.todos=state.todos.filter(x=>x.id!==editingTodo);closeDlg();touch();
+  }
+  else if(act==='idea-edit')openIdeaEdit(id);
+  else if(act==='idea-reopen'){const i=state.ideas.find(x=>x.id===id);if(i){i.done=false;delete i.itemId;touch()}}
+  else if(act==='idea-del'){
+    if(!delArmed){delArmed=true;el.textContent='Conferma eliminazione';return}
+    state.ideas=state.ideas.filter(x=>x.id!==editingIdea);closeDlg();touch();
+  }
+  else if(act==='close')closeDlg();
+  else if(act==='undo'){const it=state.items.find(x=>x.id===id);if(it){it.status='doing';it.doneAt=null;touch();$('#toast').classList.remove('show')}}
+  else if(act==='cycle'){const it=state.items.find(x=>x.id===id);it.status=it.status==='todo'?'doing':'todo';touch()}
+  else if(act==='fin'){finFilter=el.dataset.k;render()}
+  else if(act==='del'){
+    if(!delArmed){delArmed=true;el.textContent='Conferma eliminazione';return}
+    state.items=state.items.filter(x=>x.id!==editing);closeDlg();touch();
+  }
+  else if(act==='drive-save')saveDrive(true);
+  else if(act==='sheet')saveSheet();
+  else if(act==='backup')openBackup();
+  else if(act==='bk-copy'){
+    const ta=$('#bk');ta.select();
+    try{await navigator.clipboard.writeText(ta.value);toast('Copiato')}catch(x){try{document.execCommand('copy');toast('Copiato')}catch(y){toast('Seleziona il testo e copialo a mano')}}
+  }
+  else if(act==='bk-import'){
+    try{const o=JSON.parse($('#bk').value);if(!validState(o))throw 0;
+      o.nextId=Math.max(o.nextId||1,...o.items.map(i=>i.id+1),1);state=normState(o);closeDlg();touch();toast('Backup importato')}
+    catch(x){toast('Questo testo non è un backup valido')}
+  }
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='showdone'){showDone=el.checked;render();return}
+  if(el.dataset&&el.dataset.act==='todo-toggle'){
+    const t=state.todos.find(x=>x.id===+el.dataset.id); if(!t)return;
+    t.done=el.checked; t.doneAt=el.checked?Date.now():null; touch(); return;
+  }
+  if(el.dataset&&el.dataset.act==='toggle'){
+    const it=state.items.find(x=>x.id===+el.dataset.id); if(!it)return;
+    if(el.checked){it.status='done';it.doneAt=Date.now();touch();toast(`Spostata in «Finite» · <button data-act="undo" data-id="${it.id}">Annulla</button>`)}
+    else{it.status='doing';it.doneAt=null;touch()}
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#dlg').classList.contains('open'))closeDlg()});
+window.addEventListener('hashchange',()=>{const t=location.hash.slice(1).toLowerCase();if(TABS.includes(t)&&t!==tab){tab=t;render()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&drive.dirty&&drive.canSave())saveDrive(false)});
+
+/* ---------- Google Drive ---------- */
+const drive={mcp:null,status:'loading',dirty:false,saving:false,queued:false,lastSaved:null,err:null,timer:null,
+  canSave(){return !!this.mcp&&!this.saving&&this.status!=='unreadable'&&this.status!=='offline'&&this.status!=='loading'}};
+const call=async(tool,input)=>{const r=await drive.mcp.callTool(SERVER,tool,input,{cache:false});return r?r.payload:null};
+const fid=o=>o&&(o.id||o.fileId||o.file_id||(o.file&&(o.file.id||o.file.fileId)))||null;
+function asList(p){
+  if(typeof p==='string'){try{p=JSON.parse(p)}catch(e){return []}}
+  if(Array.isArray(p))return p;
+  if(p&&typeof p==='object'){for(const k of ['files','items','results']){if(Array.isArray(p[k]))return p[k]}for(const v of Object.values(p)){if(Array.isArray(v))return v}}
+  return [];
+}
+async function findFiles(title,extra){
+  const p=await call('search_files',{query:`title = '${title}' and trashed = false${extra||''}`,orderBy:'modifiedTime desc',pageSize:10,excludeContentSnippets:true});
+  return asList(p).filter(f=>f&&fid(f)&&((f.title||f.name)===undefined||(f.title||f.name)===title));
+}
+function b64ToText(b){const bin=atob(b.replace(/\s/g,''));return new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)))}
+function tryParse(s){
+  if(typeof s!=='string'||!s)return null;
+  const tries=[()=>JSON.parse(s),()=>JSON.parse(b64ToText(s)),()=>JSON.parse(s.slice(s.indexOf('{'),s.lastIndexOf('}')+1))];
+  for(const t of tries){try{const o=t();if(validState(o))return o}catch(e){}}
+  return null;
+}
+function pickState(p){
+  if(validState(p))return p;
+  const c=typeof p==='string'?[p]:p&&typeof p==='object'?[p.content,p.base64Content,p.data,p.text,p.contents,p.fileContent,p.file&&p.file.content]:[];
+  for(const s of c){const o=tryParse(s);if(o)return o}
+  return null;
+}
+async function readRemote(id){
+  for(const tool of ['download_file_content','read_file_content']){
+    try{const o=pickState(await call(tool,{fileId:id}));if(o)return o}catch(e){if(['needs_reauth','server_not_connected','approval_required','not_in_manifest','consent_required'].includes(e.code))throw e}
+  }
+  return null;
+}
+function driveErr(e){
+  const c=e&&e.code;
+  if(c==='needs_reauth')return 'Google Drive va ricollegato: apri Impostazioni → Connettori su claude.ai.';
+  if(c==='server_not_connected'||c==='server_not_found')return 'Google Drive non è collegato: aggiungilo in Impostazioni → Connettori su claude.ai.';
+  if(c==='selection_required')return 'Hai più connettori Google Drive: sceglierne uno quando claude.ai lo chiede.';
+  if(c==='approval_required'||c==='not_in_manifest'||c==='consent_required'||c==='blocked_by_policy')return 'Serve il tuo permesso per usare Drive da questa pagina. Premi «Salva su Drive» e consenti.';
+  if(c==='server_unavailable'||c==='upstream_error')return 'Drive non risponde. Le modifiche sono al sicuro in questo browser: riprova tra poco.';
+  if(c==='tool_error')return 'Drive ha rifiutato l’operazione'+(e.message?': '+String(e.message).slice(0,140):'.');
+  return 'Errore con Drive'+(c?' ('+c+')':'')+'.';
+}
+function markDirty(){
+  drive.dirty=true; clearTimeout(drive.timer);
+  if(drive.canSave()&&drive.status!=='error'){drive.timer=setTimeout(()=>saveDrive(false),7000)}
+  if(drive.status==='ok')drive.status='dirty';
+}
+function renderDrive(){
+  const el=$('#drive'), m=$('#drive-main'), s=$('#drive-sub'), b=$('#btn-save'), sh=$('#btn-sheet');
+  let st=drive.status, main='', sub='';
+  if(drive.saving)st='saving';
+  else if(st==='ok'&&drive.dirty)st='dirty';
+  el.dataset.s=st;
+  switch(st){
+    case 'loading':main='Collego Google Drive…';break;
+    case 'offline':main='Drive non è disponibile in questa vista.';sub='Le modifiche restano in questo browser. Apri la pagina da Claude per sincronizzare con Drive.';break;
+    case 'empty':main='Non c’è ancora un file su Drive.';sub=`Premi «Salva su Drive» per creare «${FILE_TITLE}».`;break;
+    case 'ok':main='Salvato su Drive'+(drive.lastSaved?' alle '+fmtTime(drive.lastSaved):'')+'.';sub=`File: ${FILE_TITLE}`;break;
+    case 'dirty':main='Modifiche non ancora salvate su Drive.';sub='Il salvataggio parte da solo pochi secondi dopo l’ultima modifica.';break;
+    case 'saving':main='Salvo su Drive…';break;
+    case 'unreadable':main='Su Drive c’è un file del planning, ma non riesco a leggerlo.';sub='Per non sovrascriverlo, il salvataggio è fermo. Premi «Riprova a leggere».';break;
+    case 'error':main=drive.err||'Errore con Drive.';sub='Le modifiche sono salvate in questo browser.';break;
+  }
+  m.textContent=main; s.textContent=sub; s.style.display=sub?'':'none';
+  b.textContent=st==='unreadable'?'Riprova a leggere':st==='empty'?'Crea file su Drive':st==='error'?'Riprova':'Salva su Drive';
+  b.disabled=!drive.mcp||st==='loading'||st==='saving'||st==='offline'||(st==='ok');
+  sh.disabled=!drive.mcp||st==='loading'||st==='saving'||st==='offline';
+}
+async function loadFromDrive(){
+  drive.status='loading';renderDrive();
+  const files=await findFiles(FILE_TITLE);
+  if(!files.length){drive.status='empty';drive.err=null;renderDrive();return}
+  const remote=await readRemote(fid(files[0]));
+  if(!remote){drive.status='unreadable';renderDrive();return}
+  const rt=remote.savedAt||0, lt=state.savedAt||0;
+  if(rt>lt){
+    remote.nextId=Math.max(remote.nextId||1,...remote.items.map(i=>i.id+1),1);
+    state=normState(remote);persistLocal();drive.status='ok';drive.lastSaved=rt;drive.dirty=false;render();
+  }else if(lt>rt){drive.status='ok';drive.dirty=true;renderDrive()}
+  else{drive.status='ok';drive.lastSaved=rt;drive.dirty=false;renderDrive()}
+}
+async function initDrive(){
+  let mcp=null;
+  try{mcp=window.claude&&window.claude.use?await window.claude.use('mcp'):null}catch(e){mcp=null}
+  if(!mcp){drive.status='offline';renderDrive();return}
+  drive.mcp=mcp;
+  try{await loadFromDrive()}catch(e){drive.status='error';drive.err=driveErr(e);renderDrive()}
+}
+async function writeFile({title,text,mime,convert,extra}){
+  const input={title,textContent:text,contentMimeType:mime};
+  if(!convert)input.disableConversionToGoogleType=true;
+  const p=await call('create_file',input);
+  const newId=fid(p), url=p&&(p.webViewLink||p.url||(p.file&&p.file.webViewLink))||null;
+  let cleaned=true;
+  try{
+    let others=(await findFiles(title,extra)).filter(f=>fid(f)!==newId);
+    if(!newId)others=others.slice(1);
+    for(const f of others){try{await call('trash_file',{fileId:fid(f)})}catch(e){cleaned=false}}
+  }catch(e){cleaned=false}
+  return {newId,url,cleaned};
+}
+async function saveDrive(manual){
+  if(!drive.mcp)return;
+  if(drive.status==='unreadable'){
+    if(manual){try{await loadFromDrive()}catch(e){drive.status='error';drive.err=driveErr(e);renderDrive()}}
+    return;
+  }
+  if(drive.saving){drive.queued=true;return}
+  clearTimeout(drive.timer);
+  drive.saving=true;renderDrive();
+  const snapshot=state.savedAt;
+  try{
+    const r=await writeFile({title:FILE_TITLE,text:JSON.stringify(state),mime:'application/json',convert:false});
+    drive.lastSaved=Date.now();drive.status='ok';drive.err=null;
+    if(state.savedAt===snapshot)drive.dirty=false;
+    if(!r.cleaned&&manual)toast('Salvato. Alcune vecchie copie restano nel Drive: puoi cestinarle a mano.');
+  }catch(e){drive.status='error';drive.err=driveErr(e);drive.dirty=true;drive.queued=false}
+  drive.saving=false;renderDrive();
+  if(drive.queued&&drive.status!=='error'){drive.queued=false;if(drive.dirty)saveDrive(false)}
+}
+const csvCell=v=>{v=String(v==null?'':v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+async function saveSheet(){
+  if(!drive.mcp)return;
+  const rows=[['Classe','Settimana dal','Giorno','Attività','Tipo','Stato','Note','Finita il']];
+  state.items.slice().sort((a,b)=>a.cls<b.cls?-1:a.cls>b.cls?1:byDate(a,b)).forEach(i=>
+    rows.push([i.cls,i.date?weekStart(i.date):'Arretrati',i.date||'',i.title,i.type,ST_LABEL[i.status]==='Non lavorativo'?'N/A':ST_LABEL[i.status],i.note||'',i.doneAt?iso(new Date(i.doneAt)):'']));
+  state.ideas.filter(i=>!i.done).forEach(i=>rows.push([i.cls||'','','',i.text,'Idea','Idea',i.note||'','']));
+  state.todos.forEach(t=>rows.push(['','',t.due||'',t.text,'Da fare per me',t.done?'Finito':'Da iniziare',t.note||'',t.doneAt?iso(new Date(t.doneAt)):'']));
+  const csv=rows.map(r=>r.map(csvCell).join(',')).join('\n');
+  toast('Creo il foglio su Drive…');
+  try{
+    const r=await writeFile({title:SHEET_TITLE,text:csv,mime:'text/csv',convert:true,extra:` and mimeType = '${SHEET_MIME}'`});
+    toast('Foglio aggiornato su Drive'+(r.url?` · <a href="${esc(r.url)}" target="_blank" rel="noopener">Apri</a>`:`: cerca «${SHEET_TITLE}»`));
+  }catch(e){toast(esc(driveErr(e)))}
+}
+
+render();
+initDrive();
+</script>
+</body>
+</html>
